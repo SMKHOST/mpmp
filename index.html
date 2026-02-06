@@ -1,0 +1,3486 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Diponegoro Marketplace</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      background-color: #f0f2f5;
+      color: #050505;
+      line-height: 1.6;
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+
+    /* Login Page Styles */
+    .background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://files.catbox.moe/ll5y61.png');
+      background-size: cover;
+      background-position: center;
+      filter: brightness(0.8);
+      z-index: -1;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      z-index: 1;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 15px;
+        max-width: 100%;
+      }
+    }
+
+    .glass-card {
+      backdrop-filter: blur(18px);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 30px 25px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      color: white;
+      animation: fadeInUp 1.2s ease-out;
+    }
+
+    @media (max-width: 480px) {
+      .glass-card {
+        padding: 20px 15px;
+        border-radius: 15px;
+      }
+    }
+
+    .glass-card h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .glass-card p {
+      font-size: 14px;
+      margin-bottom: 25px;
+      opacity: 0.8;
+      text-align: center;
+    }
+
+    .glass-card label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .glass-card input {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+      color: white;
+      transition: border-color 0.3s;
+      -webkit-appearance: none;
+    }
+
+    .glass-card input:focus {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .glass-card input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .glass-card button {
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      font-weight: 600;
+      touch-action: manipulation;
+    }
+
+    .glass-card button:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .glass-card button:active {
+      transform: scale(0.98);
+    }
+
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .footer a {
+      color: #fff;
+      text-decoration: underline;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .footer a:hover {
+      opacity: 0.8;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Error message */
+    .error-message {
+      background-color: rgba(255, 50, 50, 0.2);
+      border: 1px solid rgba(255, 100, 100, 0.5);
+      color: #ffcccc;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+      text-align: center;
+    }
+
+    /* Logo image style for marketplace */
+    .logo-img {
+      height: 35px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    /* Register page styles */
+    .register-card {
+      display: none;
+    }
+
+    /* Tabs */
+    .form-tabs {
+      display: flex;
+      margin-bottom: 25px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 5px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      border-bottom: 3px solid transparent;
+      font-size: 15px;
+    }
+
+    .tab.active {
+      border-bottom: 3px solid white;
+      color: white;
+    }
+
+    .tab:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      display: none;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Success message */
+    .success-message {
+      background-color: rgba(50, 255, 50, 0.2);
+      border: 1px solid rgba(100, 255, 100, 0.5);
+      color: #ccffcc;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+
+    /* Form row for mobile */
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 480px) {
+      .form-row {
+        flex-direction: column;
+        gap: 0;
+      }
+    }
+
+    /* Marketplace Variables */
+    :root {
+      --primary-color: #1877f2;
+      --secondary-color: #42b72a;
+      --danger-color: #e41e3f;
+      --warning-color: #ff6b6b;
+      --bg-color: #f0f2f5;
+      --card-color: #ffffff;
+      --text-primary: #050505;
+      --text-secondary: #65676b;
+      --border-color: #dddfe2;
+      --online-status: #31a24c;
+      --hover-color: #f2f2f2;
+      --admin-color: #8a2be2;
+      --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Header/Navbar */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: var(--card-color);
+      box-shadow: var(--shadow);
+      z-index: 1000;
+      padding: 10px 0;
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+
+    @media (max-width: 768px) {
+      .navbar {
+        padding: 0 10px;
+      }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--primary-color);
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1877f2, #42b72a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    @media (max-width: 480px) {
+      .logo-text {
+        display: none;
+      }
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 15px;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        gap: 10px;
+      }
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .nav-item {
+        padding: 8px;
+      }
+      
+      .nav-item span {
+        font-size: 11px;
+      }
+    }
+
+    .nav-item:hover {
+      background-color: var(--hover-color);
+    }
+
+    .nav-item.active {
+      color: var(--primary-color);
+      border-bottom: 3px solid var(--primary-color);
+    }
+
+    .nav-item i {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .nav-item.admin-badge {
+      color: var(--admin-color);
+      border-color: var(--admin-color);
+    }
+
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    .notification {
+      position: relative;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+    }
+
+    .notification:hover {
+      background-color: var(--hover-color);
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: var(--danger-color);
+      color: white;
+      font-size: 10px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-profile {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .user-avatar:hover {
+      border-color: var(--primary-color);
+    }
+
+    .user-avatar.admin {
+      border-color: var(--admin-color);
+    }
+
+    .profile-dropdown {
+      position: absolute;
+      top: 50px;
+      right: 0;
+      background-color: var(--card-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      width: 220px;
+      z-index: 1001;
+      display: none;
+      overflow: hidden;
+    }
+
+    .profile-dropdown.active {
+      display: block;
+      animation: fadeIn 0.2s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dropdown-header {
+      padding: 15px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+    }
+
+    .dropdown-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 10px;
+    }
+
+    .dropdown-user-info h4 {
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+
+    .dropdown-user-info p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .dropdown-menu {
+      list-style: none;
+    }
+
+    .dropdown-item {
+      padding: 12px 15px;
+      display: flex;
+      align-items: center;
+      transition: background-color 0.2s;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .dropdown-item:hover {
+      background-color: var(--hover-color);
+    }
+
+    .dropdown-item i {
+      width: 20px;
+      margin-right: 10px;
+      color: var(--text-secondary);
+    }
+
+    .dropdown-item.logout {
+      color: var(--danger-color);
+    }
+
+    .dropdown-item.logout i {
+      color: var(--danger-color);
+    }
+
+    /* Main content */
+    .container-marketplace {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-top: 70px;
+      padding-bottom: 20px;
+    }
+
+    @media (max-width: 1200px) {
+      .container-marketplace {
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+    }
+
+    .main-content {
+      min-height: calc(100vh - 100px);
+      width: 100%;
+    }
+
+    .content-section {
+      display: none;
+      animation: fadeIn 0.5s;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    .section-title {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+    }
+
+    @media (max-width: 768px) {
+      .section-title {
+        font-size: 20px;
+      }
+    }
+
+    /* Marketplace Section */
+    .marketplace-header {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    @media (min-width: 768px) {
+      .marketplace-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background-color: var(--card-color);
+      border-radius: 20px;
+      padding: 8px 15px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .search-bar input {
+      border: none;
+      outline: none;
+      background: transparent;
+      width: 100%;
+      margin-left: 10px;
+      font-size: 16px;
+    }
+
+    .categories {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .category {
+      padding: 8px 15px;
+      background-color: var(--card-color);
+      border-radius: 20px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.2s;
+      font-size: 14px;
+    }
+
+    .category:hover {
+      background-color: var(--hover-color);
+    }
+
+    .category.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .add-product-btn {
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.2s;
+      font-size: 16px;
+      touch-action: manipulation;
+    }
+
+    .add-product-btn:hover {
+      background-color: #36a420;
+    }
+
+    .add-product-btn:active {
+      transform: scale(0.98);
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      min-height: 300px;
+    }
+
+    @media (max-width: 768px) {
+      .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+      }
+    }
+
+    .product-card {
+      background-color: var(--card-color);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .product-image {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+
+    @media (max-width: 768px) {
+      .product-image {
+        height: 150px;
+      }
+    }
+
+    .product-info {
+      padding: 15px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      min-height: 40px;
+    }
+
+    .product-price {
+      color: var(--primary-color);
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .product-seller {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .seller-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 8px;
+    }
+
+    .seller-name {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .seller-username {
+      font-size: 12px;
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+
+    .product-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .btn {
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.2s;
+      font-size: 14px;
+      touch-action: manipulation;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #166fe5;
+    }
+
+    .btn-secondary {
+      background-color: var(--secondary-color);
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background-color: #36a420;
+    }
+
+    .btn-danger {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background-color: #d11a3a;
+    }
+
+    .btn-warning {
+      background-color: var(--warning-color);
+      color: white;
+    }
+
+    .btn-warning:hover {
+      background-color: #ff5252;
+    }
+
+    .btn-admin {
+      background-color: var(--admin-color);
+      color: white;
+    }
+
+    .btn-admin:hover {
+      background-color: #7b1fa2;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+      grid-column: 1 / -1;
+    }
+
+    .empty-state i {
+      font-size: 64px;
+      margin-bottom: 20px;
+      color: var(--border-color);
+    }
+
+    .empty-state h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .empty-state p {
+      max-width: 500px;
+      margin: 0 auto 20px;
+      line-height: 1.6;
+    }
+
+    /* Admin Panel */
+    .admin-panel {
+      background-color: var(--card-color);
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: var(--shadow);
+    }
+
+    .admin-section {
+      margin-bottom: 30px;
+    }
+
+    .admin-section h3 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: var(--text-primary);
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 5px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, var(--primary-color), #4a6fa5);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .stat-card h4 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      opacity: 0.9;
+    }
+
+    .stat-card .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-card .stat-change {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .stat-card.danger {
+      background: linear-gradient(135deg, var(--danger-color), #c2185b);
+    }
+
+    .stat-card.warning {
+      background: linear-gradient(135deg, var(--warning-color), #ff9800);
+    }
+
+    .stat-card.success {
+      background: linear-gradient(135deg, var(--secondary-color), #388e3c);
+    }
+
+    .admin-table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: var(--card-color);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .admin-table th {
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: 600;
+      text-align: left;
+      padding: 15px;
+      font-size: 14px;
+    }
+
+    .admin-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+    }
+
+    .admin-table tr:hover {
+      background-color: var(--hover-color);
+    }
+
+    .admin-table .status-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-badge.active {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .status-badge.blocked {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .status-badge.admin {
+      background-color: #e8daef;
+      color: var(--admin-color);
+    }
+
+    .admin-table .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .admin-table .action-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .action-btn.block {
+      background-color: #ff6b6b;
+      color: white;
+    }
+
+    .action-btn.unblock {
+      background-color: #42b72a;
+      color: white;
+    }
+
+    .action-btn.delete {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .action-btn.promote {
+      background-color: #8a2be2;
+      color: white;
+    }
+
+    /* Product Detail */
+    .product-detail-container {
+      background-color: var(--card-color);
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: var(--shadow);
+    }
+
+    @media (max-width: 768px) {
+      .product-detail-container {
+        padding: 15px;
+      }
+    }
+
+    .product-detail {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
+
+    @media (min-width: 992px) {
+      .product-detail {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .product-images {
+      position: relative;
+    }
+
+    .product-images img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .product-thumbnails {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+    }
+
+    .product-thumbnails img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 5px;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .product-thumbnails img.active {
+      border-color: var(--primary-color);
+    }
+
+    .product-info-detail h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+
+    @media (max-width: 768px) {
+      .product-info-detail h1 {
+        font-size: 22px;
+      }
+    }
+
+    .product-price-detail {
+      font-size: 28px;
+      color: var(--primary-color);
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .product-price-detail {
+        font-size: 24px;
+      }
+    }
+
+    .seller-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: var(--bg-color);
+      border-radius: 8px;
+    }
+
+    .seller-avatar-detail {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 15px;
+    }
+
+    .seller-info-detail h3 {
+      margin-bottom: 5px;
+      font-size: 18px;
+    }
+
+    .seller-username-detail {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+    }
+
+    .seller-rating {
+      color: #ffc107;
+      font-size: 14px;
+    }
+
+    .product-description {
+      margin-bottom: 30px;
+    }
+
+    .product-description h3 {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .product-description p {
+      color: var(--text-secondary);
+      line-height: 1.8;
+      font-size: 16px;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    @media (min-width: 768px) {
+      .action-buttons {
+        flex-direction: row;
+      }
+    }
+
+    .back-btn {
+      background-color: var(--text-secondary);
+      color: white;
+    }
+
+    .back-btn:hover {
+      background-color: #555;
+    }
+
+    /* Messages Section */
+    .messages-container {
+      display: flex;
+      flex-direction: column;
+      height: 600px;
+      background-color: var(--card-color);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    @media (min-width: 768px) {
+      .messages-container {
+        flex-direction: row;
+      }
+    }
+
+    .conversations {
+      width: 100%;
+      border-bottom: 1px solid var(--border-color);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 768px) {
+      .conversations {
+        width: 300px;
+        border-right: 1px solid var(--border-color);
+        border-bottom: none;
+      }
+    }
+
+    .conversations-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .conversation-search {
+      width: 100%;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      outline: none;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .conversations-list {
+      list-style: none;
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .conversation {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+      transition: background-color 0.2s;
+      position: relative;
+    }
+
+    .conversation:hover {
+      background-color: var(--hover-color);
+    }
+
+    .conversation.active {
+      background-color: var(--hover-color);
+    }
+
+    .conversation-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 10px;
+    }
+
+    .conversation-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .conversation-name {
+      font-weight: 600;
+      margin-bottom: 5px;
+      font-size: 16px;
+    }
+
+    .conversation-username {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 3px;
+    }
+
+    .conversation-preview {
+      font-size: 14px;
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .conversation-time {
+      font-size: 12px;
+      color: var(--text-secondary);
+      position: absolute;
+      top: 15px;
+      right: 15px;
+    }
+
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header-info {
+      display: flex;
+      align-items: center;
+    }
+
+    .chat-header-details {
+      margin-left: 10px;
+    }
+
+    .chat-header-name {
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .chat-header-username {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .chat-header-status {
+      font-size: 13px;
+      color: var(--online-status);
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .message {
+      max-width: 80%;
+      margin-bottom: 15px;
+      padding: 12px 16px;
+      border-radius: 18px;
+      position: relative;
+      word-wrap: break-word;
+    }
+
+    @media (min-width: 768px) {
+      .message {
+        max-width: 70%;
+      }
+    }
+
+    .message.received {
+      background-color: var(--border-color);
+      align-self: flex-start;
+    }
+
+    .message.sent {
+      background-color: var(--primary-color);
+      color: white;
+      align-self: flex-end;
+    }
+
+    .message-content {
+      word-break: break-word;
+      line-height: 1.4;
+    }
+
+    .message-time {
+      font-size: 12px;
+      margin-top: 5px;
+      text-align: right;
+      opacity: 0.8;
+    }
+
+    .chat-input {
+      padding: 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 12px 15px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      outline: none;
+      font-size: 16px;
+    }
+
+    .send-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .send-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Add Product Section */
+    .add-product-form {
+      background-color: var(--card-color);
+      border-radius: 10px;
+      padding: 25px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+      .add-product-form {
+        padding: 20px;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text-primary);
+    }
+
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+      background-color: white;
+    }
+
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .image-upload {
+      border: 2px dashed var(--border-color);
+      border-radius: 10px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background-color: var(--bg-color);
+    }
+
+    .image-upload:hover {
+      border-color: var(--primary-color);
+      background-color: #f8f9fa;
+    }
+
+    .image-upload i {
+      font-size: 48px;
+      color: var(--text-secondary);
+      margin-bottom: 15px;
+    }
+
+    .image-upload p {
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+    }
+
+    .uploaded-images {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .uploaded-image {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+      position: relative;
+    }
+
+    .remove-image {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: rgba(0,0,0,0.7);
+      color: white;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .remove-image:hover {
+      background-color: rgba(0,0,0,0.9);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 2000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background-color: var(--card-color);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      animation: modalFadeIn 0.3s;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      background-color: var(--card-color);
+      z-index: 1;
+    }
+
+    .modal-header h3 {
+      font-size: 20px;
+      color: var(--text-primary);
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background-color 0.2s;
+    }
+
+    .close-modal:hover {
+      background-color: var(--hover-color);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .modal-footer {
+      padding: 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 15px;
+      position: sticky;
+      bottom: 0;
+      background-color: var(--card-color);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 40px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Utility Classes */
+    .hidden {
+      display: none !important;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mb-20 {
+      margin-bottom: 20px;
+    }
+
+    .mt-20 {
+      margin-top: 20px;
+    }
+
+    .p-20 {
+      padding: 20px;
+    }
+
+    /* Mobile Optimization */
+    @media (max-width: 480px) {
+      .btn {
+        padding: 12px 16px;
+        font-size: 16px;
+      }
+      
+      .modal {
+        max-height: 85vh;
+      }
+      
+      .product-detail-container {
+        margin: 0 -15px;
+        border-radius: 0;
+      }
+      
+      .container-marketplace {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      
+      .main-content {
+        padding: 0 15px;
+      }
+    }
+
+    /* Safe area for iPhone */
+    @supports (padding: max(0px)) {
+      .navbar {
+        padding-left: max(15px, env(safe-area-inset-left));
+        padding-right: max(15px, env(safe-area-inset-right));
+      }
+      
+      .container-marketplace {
+        padding-left: max(15px, env(safe-area-inset-left));
+        padding-right: max(15px, env(safe-area-inset-right));
+      }
+      
+      .main-content {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background" id="background"></div>
+  
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+  
+  <!-- Login Container -->
+  <div class="container" id="loginContainer">
+    <!-- Login Form -->
+    <form class="glass-card login-card" id="loginForm">
+      <h2>Welcome to Diponegoro Market</h2>
+      <p>Please login to your account</p>
+      
+      <div class="form-tabs">
+        <div class="tab active" id="loginTab">Login</div>
+        <div class="tab" id="registerTab">Register</div>
+      </div>
+      
+      <div class="error-message" id="errorMessage">
+        Invalid username or password
+      </div>
+      
+      <div class="success-message" id="successMessage">
+        Registration successful! Please login.
+      </div>
+      
+      <label for="username">Email atau Username</label>
+      <input type="text" id="username" placeholder="user@example.com atau username" required />
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="........" required />
+      <button type="submit">Login</button>
+    </form>
+    
+    <!-- Register Form -->
+    <form class="glass-card register-card" id="registerForm">
+      <h2>Create Account</h2>
+      <p>Join Diponegoro Marketplace</p>
+      
+      <div class="form-tabs">
+        <div class="tab" id="loginTab2">Login</div>
+        <div class="tab active" id="registerTab2">Register</div>
+      </div>
+      
+      <div class="error-message" id="registerErrorMessage" style="display: none;">
+        Please fill all fields correctly.
+      </div>
+      
+      <div class="success-message" id="registerSuccessMessage" style="display: none;">
+        Registration successful! You can now login.
+      </div>
+      
+      <div class="form-row">
+        <div style="flex: 1;">
+          <label for="firstName">First Name</label>
+          <input type="text" id="firstName" placeholder="John" required />
+        </div>
+        <div style="flex: 1;">
+          <label for="lastName">Last Name</label>
+          <input type="text" id="lastName" placeholder="Doe" required />
+        </div>
+      </div>
+      
+      <label for="usernameReg">Username *</label>
+      <input type="text" id="usernameReg" placeholder="johndoe" required />
+      <small style="display: block; margin-top: -15px; margin-bottom: 20px; font-size: 12px; opacity: 0.7;">Username unik untuk login dan identitas</small>
+      
+      <label for="nickname">Nickname / Panggilan</label>
+      <input type="text" id="nickname" placeholder="John" />
+      
+      <label for="regEmail">Email</label>
+      <input type="email" id="regEmail" placeholder="student@smkdipma.sch.id" required />
+      
+      <label for="regPassword">Password</label>
+      <input type="password" id="regPassword" placeholder="........" required />
+      
+      <label for="confirmPassword">Confirm Password</label>
+      <input type="password" id="confirmPassword" placeholder="........" required />
+      
+      <label for="phone">Phone Number (Optional)</label>
+      <input type="tel" id="phone" placeholder="08123456789" />
+      
+      <button type="submit">Create Account</button>
+      <div class="footer">
+        <p>Already have an account? <a id="backToLogin">Login here</a></p>
+      </div>
+    </form>
+  </div>
+
+  <!-- Marketplace Container -->
+  <div id="marketplaceContainer" class="hidden">
+    <!-- Marketplace content will be injected here -->
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="confirmation-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Konfirmasi</h3>
+        <button class="close-modal" id="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="modal-message">Apakah Anda yakin?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="modal-cancel">Batal</button>
+        <button class="btn btn-primary" id="modal-confirm">Ya</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBCJZsfJMDRwJmmV870t5H14w8dKKeu2Wk",
+      authDomain: "marketplace-9cc96.firebaseapp.com",
+      databaseURL: "https://marketplace-9cc96-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "marketplace-9cc96",
+      storageBucket: "marketplace-9cc96.firebasestorage.app",
+      messagingSenderId: "1082835231635",
+      appId: "1:1082835231635:web:fa63229cff44ecd7acbe66",
+      measurementId: "G-Q1V9QKR020"
+    };
+
+    // Initialize Firebase
+    try {
+      firebase.initializeApp(firebaseConfig);
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+    }
+    
+    const auth = firebase.auth();
+    const database = firebase.database();
+    const storage = firebase.storage();
+
+    // Global state
+    let currentUser = null;
+    let currentUserData = null;
+    let uploadedImages = [];
+    let currentConversationId = null;
+    let products = [];
+    let users = [];
+    let conversations = [];
+
+    // DOM Elements
+    const loginContainer = document.getElementById('loginContainer');
+    const marketplaceContainer = document.getElementById('marketplaceContainer');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    // Show loading
+    function showLoading() {
+      loadingOverlay.style.display = 'flex';
+    }
+
+    // Hide loading
+    function hideLoading() {
+      loadingOverlay.style.display = 'none';
+    }
+
+    // Check authentication state
+    auth.onAuthStateChanged(async (user) => {
+      console.log('Auth state changed:', user ? 'User signed in' : 'User signed out');
+      
+      if (user) {
+        // User is signed in
+        currentUser = user;
+        console.log('User UID:', user.uid);
+        console.log('User email:', user.email);
+        
+        try {
+          await loadUserData(user.uid);
+          showMarketplace();
+        } catch (error) {
+          console.error('Failed to load user data:', error);
+          showError('Failed to load user data. Please try logging out and back in.');
+          // Force logout to reset state
+          setTimeout(() => {
+            auth.signOut();
+          }, 3000);
+        }
+      } else {
+        // User is signed out
+        currentUser = null;
+        currentUserData = null;
+        showLogin();
+      }
+    });
+
+    // Load user data from database with better error handling
+    async function loadUserData(uid) {
+      console.log('Loading user data for UID:', uid);
+      
+      try {
+        // First, check if database connection is working
+        const connectedRef = database.ref(".info/connected");
+        connectedRef.once("value", function(snap) {
+          console.log('Database connected:', snap.val() === true);
+        });
+        
+        const userRef = database.ref('users/' + uid);
+        console.log('User reference path:', userRef.toString());
+        
+        const snapshot = await userRef.once('value');
+        console.log('User data snapshot:', snapshot.exists() ? 'Exists' : 'Does not exist');
+        
+        if (snapshot.exists()) {
+          currentUserData = snapshot.val();
+          console.log('Loaded user data:', currentUserData);
+          
+          // Ensure required fields exist
+          if (!currentUserData.username) {
+            currentUserData.username = currentUser.email.split('@')[0];
+          }
+          if (!currentUserData.name) {
+            currentUserData.name = currentUser.displayName || 'User';
+          }
+          if (!currentUserData.nickname) {
+            currentUserData.nickname = currentUser.displayName?.split(' ')[0] || 'User';
+          }
+          if (!currentUserData.role) {
+            currentUserData.role = 'member';
+          }
+          if (!currentUserData.status) {
+            currentUserData.status = 'active';
+          }
+          
+          // Update last login
+          await userRef.update({
+            lastLogin: new Date().toISOString()
+          });
+          
+        } else {
+          console.log('User data not found, creating new user data...');
+          
+          // Extract username from email
+          let username = '';
+          if (currentUser.email) {
+            username = currentUser.email.split('@')[0];
+          } else {
+            username = 'user' + Math.floor(Math.random() * 10000);
+          }
+          
+          // Create user data if doesn't exist
+          currentUserData = {
+            uid: uid,
+            email: currentUser.email || '',
+            username: username,
+            name: currentUser.displayName || 'User',
+            nickname: currentUser.displayName?.split(' ')[0] || 'User',
+            role: 'member',
+            status: 'active',
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+          };
+          
+          console.log('Creating user data:', currentUserData);
+          await userRef.set(currentUserData);
+          console.log('User data created successfully');
+        }
+        
+      } catch (error) {
+        console.error('Error loading/creating user data:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        // If database fails, create a minimal user data object
+        currentUserData = {
+          uid: uid,
+          email: currentUser.email || '',
+          username: 'user' + Math.floor(Math.random() * 10000),
+          name: 'User',
+          nickname: 'User',
+          role: 'member',
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        };
+        
+        console.log('Using fallback user data:', currentUserData);
+        throw new Error('Database error: ' + error.message);
+      }
+    }
+
+    // Show login page
+    function showLogin() {
+      loginContainer.style.display = 'block';
+      marketplaceContainer.classList.add('hidden');
+      document.body.style.background = 'none';
+      document.getElementById('background').style.display = 'block';
+    }
+
+    // Show marketplace
+    function showMarketplace() {
+      console.log('Showing marketplace for user:', currentUserData);
+      loginContainer.style.display = 'none';
+      marketplaceContainer.classList.remove('hidden');
+      document.body.style.background = 'var(--bg-color)';
+      document.getElementById('background').style.display = 'none';
+      
+      loadMarketplace();
+    }
+
+    // Load marketplace HTML
+    function loadMarketplace() {
+      if (!currentUserData) {
+        console.error('No user data available');
+        showError('No user data available. Please login again.');
+        auth.signOut();
+        return;
+      }
+      
+      const isAdmin = currentUserData?.role === 'admin';
+      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserData?.name || 'User')}&background=${isAdmin ? '8a2be2' : '1877f2'}&color=fff&size=128`;
+      
+      marketplaceContainer.innerHTML = `
+        <header>
+          <nav class="navbar">
+            <a href="#" class="logo" onclick="location.reload()">
+              <img src="https://files.catbox.moe/ll5y61.png" alt="Diponegoro Market Logo" class="logo-img">
+              <span class="logo-text">DIPONEGORO MARKET</span>
+            </a>
+            
+            <div class="nav-links">
+              <a href="#" class="nav-item active" data-target="marketplace">
+                <i class="fas fa-store-alt"></i>
+                <span>Marketplace</span>
+              </a>
+              <a href="#" class="nav-item" data-target="messages">
+                <i class="fas fa-comments"></i>
+                <span>Pesan</span>
+              </a>
+              ${isAdmin ? `
+                <a href="#" class="nav-item admin-badge" data-target="admin">
+                  <i class="fas fa-shield-alt"></i>
+                  <span>Admin</span>
+                </a>
+              ` : ''}
+            </div>
+            
+            <div class="user-actions">
+              <div class="notification">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="notification-count">0</span>
+              </div>
+              <div class="user-profile">
+                <img src="${avatarUrl}" alt="User Avatar" class="user-avatar ${isAdmin ? 'admin' : ''}" id="user-avatar">
+                <div class="profile-dropdown" id="profile-dropdown">
+                  <div class="dropdown-header">
+                    <img src="${avatarUrl}" alt="User Avatar" class="dropdown-avatar">
+                    <div class="dropdown-user-info">
+                      <h4>${currentUserData?.nickname || 'User'}</h4>
+                      <p>@${currentUserData?.username || 'user'}</p>
+                      ${isAdmin ? '<small style="color: var(--admin-color); font-weight: bold;">ADMIN</small>' : ''}
+                    </div>
+                  </div>
+                  <ul class="dropdown-menu">
+                    <li><a href="#" class="dropdown-item" id="add-product-menu"><i class="fas fa-plus-circle"></i> Jual Barang</a></li>
+                    <li><a href="#" class="dropdown-item" id="my-products-menu"><i class="fas fa-box"></i> Barang Saya</a></li>
+                    ${isAdmin ? '<li><a href="#" class="dropdown-item" id="admin-menu"><i class="fas fa-shield-alt"></i> Admin Panel</a></li>' : ''}
+                    <li><a href="#" class="dropdown-item logout" id="logout"><i class="fas fa-sign-out-alt"></i> Keluar</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </nav>
+        </header>
+
+        <div class="container-marketplace">
+          <main class="main-content">
+            <!-- Marketplace Section -->
+            <section id="marketplace" class="content-section active">
+              <div class="marketplace-header">
+                <h1 class="section-title">Marketplace SMK Dipma</h1>
+                <div class="search-bar">
+                  <i class="fas fa-search"></i>
+                  <input type="text" id="search-input" placeholder="Cari produk, username, atau penjual...">
+                </div>
+                <button class="add-product-btn" id="add-product-btn">
+                  <i class="fas fa-plus"></i>
+                  <span>Jual Barang</span>
+                </button>
+              </div>
+              
+              <div class="categories">
+                <div class="category active" data-category="all">Semua</div>
+                <div class="category" data-category="buku">Buku & Catatan</div>
+                <div class="category" data-category="elektronik">Elektronik</div>
+                <div class="category" data-category="pakaian">Pakaian</div>
+                <div class="category" data-category="olahraga">Olahraga</div>
+                <div class="category" data-category="hobi">Hobi</div>
+                <div class="category" data-category="lainnya">Lainnya</div>
+              </div>
+              
+              <div class="products-grid" id="products-grid">
+                <div class="empty-state">
+                  <i class="fas fa-box-open"></i>
+                  <h3>Memuat produk...</h3>
+                  <p>Silakan tunggu sebentar</p>
+                </div>
+              </div>
+            </section>
+            
+            <!-- Messages Section -->
+            <section id="messages" class="content-section">
+              <h1 class="section-title">Direct Message</h1>
+              <div class="messages-container">
+                <div class="empty-state">
+                  <i class="fas fa-comments"></i>
+                  <h3>Belum ada pesan</h3>
+                  <p>Mulai percakapan dengan penjual atau pembeli</p>
+                </div>
+              </div>
+            </section>
+            
+            <!-- Admin Panel Section -->
+            <section id="admin" class="content-section">
+              <h1 class="section-title">Admin Panel</h1>
+              <div class="admin-panel">
+                <div class="stats-grid" id="admin-stats">
+                  <!-- Stats will be loaded here -->
+                </div>
+                
+                <div class="admin-section">
+                  <h3>Pengguna</h3>
+                  <div class="admin-table-container">
+                    <table class="admin-table" id="users-table">
+                      <thead>
+                        <tr>
+                          <th>Username</th>
+                          <th>Nama</th>
+                          <th>Role</th>
+                          <th>Status</th>
+                          <th>Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody id="users-table-body">
+                        <!-- Users will be loaded here -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div class="admin-section">
+                  <h3>Produk</h3>
+                  <div class="admin-table-container">
+                    <table class="admin-table" id="products-admin-table">
+                      <thead>
+                        <tr>
+                          <th>Nama Produk</th>
+                          <th>Penjual</th>
+                          <th>Harga</th>
+                          <th>Status</th>
+                          <th>Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody id="products-admin-table-body">
+                        <!-- Products will be loaded here -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </section>
+            
+            <!-- Product Detail Section -->
+            <section id="product-detail" class="content-section">
+              <div class="product-detail-container">
+                <div class="empty-state">
+                  <i class="fas fa-box"></i>
+                  <h3>Produk tidak ditemukan</h3>
+                  <button class="btn back-btn" onclick="navigateTo('marketplace')">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Marketplace
+                  </button>
+                </div>
+              </div>
+            </section>
+            
+            <!-- Add Product Section -->
+            <section id="add-product" class="content-section">
+              <h1 class="section-title">Jual Barang Baru</h1>
+              <div class="add-product-form">
+                <div class="form-group">
+                  <label for="product-name">Nama Barang</label>
+                  <input type="text" id="product-name" placeholder="Contoh: Buku Matematika Dasar" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="product-price">Harga (Rp)</label>
+                  <input type="number" id="product-price" placeholder="Contoh: 50000" min="0" required>
+                </div>
+                
+                <div class="form-row">
+                  <div class="form-group" style="flex: 1;">
+                    <label for="product-category">Kategori</label>
+                    <select id="product-category" required>
+                      <option value="buku">Buku & Catatan</option>
+                      <option value="elektronik">Elektronik</option>
+                      <option value="pakaian">Pakaian</option>
+                      <option value="olahraga">Olahraga</option>
+                      <option value="hobi">Hobi</option>
+                      <option value="lainnya">Lainnya</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="flex: 1;">
+                    <label for="product-condition">Kondisi Barang</label>
+                    <select id="product-condition" required>
+                      <option value="baru">Baru</option>
+                      <option value="bekas-bagus">Bekas (Bagus)</option>
+                      <option value="bekas-layak">Bekas (Layak Pakai)</option>
+                      <option value="rusak-ringan">Rusak Ringan</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label>Foto Barang (Maksimal 5 foto)</label>
+                  <div class="image-upload" id="image-upload">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Klik untuk upload foto</p>
+                    <p style="font-size: 14px; color: var(--text-secondary);">Format: JPG, PNG, Maks 5MB</p>
+                  </div>
+                  <input type="file" id="image-input" accept="image/*" multiple style="display: none;">
+                  <div class="uploaded-images" id="uploaded-images">
+                    <!-- Uploaded images will appear here -->
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="product-contact">Kontak yang Bisa Dihubungi</label>
+                  <input type="text" id="product-contact" placeholder="WhatsApp/Line/Instagram" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="product-location">Lokasi Penjemputan</label>
+                  <input type="text" id="product-location" placeholder="Contoh: Gedung FISIP Undip" required>
+                </div>
+                
+                <div class="action-buttons">
+                  <button class="btn back-btn" id="cancel-add-product">
+                    <i class="fas fa-arrow-left"></i> Kembali
+                  </button>
+                  <button class="btn btn-primary" id="publish-product">
+                    <i class="fas fa-paper-plane"></i> Publikasikan Barang
+                  </button>
+                </div>
+              </div>
+            </section>
+            
+            <!-- My Products Section -->
+            <section id="my-products" class="content-section">
+              <h1 class="section-title">Barang Yang Saya Jual</h1>
+              <div class="products-grid" id="my-products-grid">
+                <div class="empty-state">
+                  <i class="fas fa-box"></i>
+                  <h3>Memuat produk Anda...</h3>
+                  <p>Silakan tunggu sebentar</p>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
+
+        <footer>
+          <p>&copy; 2026 Diponegoro Marketplace. Platform jual-beli untuk siswa/i SMK Diponegoro Majenang.</p>
+        </footer>
+      `;
+      
+      initializeMarketplace();
+    }
+
+    // Initialize marketplace functionality
+    function initializeMarketplace() {
+      setupEventListeners();
+      loadProducts();
+      if (currentUserData?.role === 'admin') {
+        loadAdminData();
+      }
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Profile dropdown
+      document.getElementById('user-avatar')?.addEventListener('click', toggleProfileDropdown);
+      document.addEventListener('click', closeProfileDropdown);
+      
+      // Navigation
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = e.currentTarget.getAttribute('data-target');
+          navigateTo(target);
+        });
+      });
+      
+      // Dropdown menu actions
+      document.getElementById('add-product-menu')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigateTo('add-product');
+        closeProfileDropdown();
+      });
+      
+      document.getElementById('my-products-menu')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigateTo('my-products');
+        loadMyProducts();
+        closeProfileDropdown();
+      });
+      
+      document.getElementById('admin-menu')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigateTo('admin');
+        loadAdminData();
+        closeProfileDropdown();
+      });
+      
+      // Logout
+      document.getElementById('logout')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showConfirmation('Keluar', 'Apakah Anda yakin ingin keluar?', () => {
+          auth.signOut();
+        });
+        closeProfileDropdown();
+      });
+      
+      // Add product button
+      document.getElementById('add-product-btn')?.addEventListener('click', () => navigateTo('add-product'));
+      document.getElementById('empty-add-product-btn')?.addEventListener('click', () => navigateTo('add-product'));
+      document.getElementById('empty-my-products-btn')?.addEventListener('click', () => navigateTo('add-product'));
+      
+      // Image upload
+      const imageUpload = document.getElementById('image-upload');
+      const imageInput = document.getElementById('image-input');
+      
+      if (imageUpload && imageInput) {
+        imageUpload.addEventListener('click', () => imageInput.click());
+        imageInput.addEventListener('change', handleImageUpload);
+      }
+      
+      // Publish product
+      document.getElementById('publish-product')?.addEventListener('click', publishProduct);
+      
+      // Cancel add product
+      document.getElementById('cancel-add-product')?.addEventListener('click', () => navigateTo('marketplace'));
+      
+      // Categories
+      document.querySelectorAll('.category').forEach(cat => {
+        cat.addEventListener('click', function() {
+          document.querySelectorAll('.category').forEach(c => c.classList.remove('active'));
+          this.classList.add('active');
+          filterProducts(this.getAttribute('data-category'));
+        });
+      });
+      
+      // Search
+      const searchInput = document.getElementById('search-input');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => searchProducts(e.target.value));
+      }
+      
+      // Modal
+      setupModal();
+    }
+
+    // Navigation
+    function navigateTo(section) {
+      // Update navigation
+      document.querySelectorAll('.nav-item').forEach(nav => {
+        nav.classList.remove('active');
+        if (nav.getAttribute('data-target') === section) {
+          nav.classList.add('active');
+        }
+      });
+      
+      // Show section
+      document.querySelectorAll('.content-section').forEach(sec => {
+        sec.classList.remove('active');
+      });
+      
+      const targetSection = document.getElementById(section);
+      if (targetSection) {
+        targetSection.classList.add('active');
+      }
+    }
+
+    // Profile dropdown
+    function toggleProfileDropdown(e) {
+      e.stopPropagation();
+      const dropdown = document.getElementById('profile-dropdown');
+      dropdown.classList.toggle('active');
+    }
+
+    function closeProfileDropdown(e) {
+      const dropdown = document.getElementById('profile-dropdown');
+      if (!e?.target.closest('.user-profile')) {
+        dropdown.classList.remove('active');
+      }
+    }
+
+    // Load products from Firebase
+    async function loadProducts(category = 'all') {
+      showLoading();
+      try {
+        const productsRef = database.ref('products');
+        const snapshot = await productsRef.once('value');
+        
+        products = [];
+        snapshot.forEach((childSnapshot) => {
+          const product = childSnapshot.val();
+          if (product.status !== 'deleted') {
+            products.push({ id: childSnapshot.key, ...product });
+          }
+        });
+        
+        displayProducts(category);
+      } catch (error) {
+        console.error('Error loading products:', error);
+        showError('Failed to load products');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Display products in grid
+    function displayProducts(category = 'all') {
+      const grid = document.getElementById('products-grid');
+      if (!grid) return;
+      
+      let filteredProducts = category === 'all' 
+        ? products 
+        : products.filter(p => p.category === category);
+      
+      filteredProducts = filteredProducts.filter(p => p.status === 'active');
+      
+      if (filteredProducts.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <h3>Belum ada produk</h3>
+            <p>Marketplace masih kosong. Jadilah yang pertama menambahkan produk!</p>
+            <button class="btn btn-primary" id="empty-add-product-btn">
+              <i class="fas fa-plus"></i> Tambah Produk Pertama
+            </button>
+          </div>
+        `;
+        
+        document.getElementById('empty-add-product-btn')?.addEventListener('click', () => navigateTo('add-product'));
+        return;
+      }
+      
+      grid.innerHTML = '';
+      
+      filteredProducts.forEach(product => {
+        const card = createProductCard(product);
+        grid.appendChild(card);
+      });
+    }
+
+    // Create product card element
+    function createProductCard(product) {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.dataset.id = product.id;
+      
+      const sellerName = product.sellerName || 'Unknown';
+      const sellerUsername = product.sellerUsername || 'unknown';
+      const sellerAvatar = product.sellerAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(sellerName)}&background=1877f2&color=fff&size=128`;
+      
+      card.innerHTML = `
+        <img src="${product.images?.[0] || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'}" 
+             alt="${product.name}" class="product-image">
+        <div class="product-info">
+          <div class="product-title">${product.name}</div>
+          <div class="product-price">Rp ${product.price?.toLocaleString('id-ID') || '0'}</div>
+          <div class="product-seller">
+            <img src="${sellerAvatar}" alt="Seller" class="seller-avatar">
+            <div>
+              <div class="seller-name">${sellerName}</div>
+              <div class="seller-username">@${sellerUsername}</div>
+            </div>
+          </div>
+          <div class="product-actions">
+            <button class="btn btn-primary" onclick="viewProductDetail('${product.id}')">Lihat Detail</button>
+            <button class="btn btn-secondary" onclick="messageSeller('${product.sellerId}', '${product.id}')">Tanya</button>
+          </div>
+        </div>
+      `;
+      
+      return card;
+    }
+
+    // View product detail
+    async function viewProductDetail(productId) {
+      showLoading();
+      try {
+        const productRef = database.ref('products/' + productId);
+        const snapshot = await productRef.once('value');
+        
+        if (!snapshot.exists()) {
+          throw new Error('Product not found');
+        }
+        
+        const product = snapshot.val();
+        const userRef = database.ref('users/' + product.sellerId);
+        const userSnapshot = await userRef.once('value');
+        const seller = userSnapshot.val();
+        
+        const container = document.querySelector('.product-detail-container');
+        if (!container) return;
+        
+        const sellerName = seller?.name || 'Unknown';
+        const sellerUsername = seller?.username || 'unknown';
+        const sellerAvatar = seller?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(sellerName)}&background=1877f2&color=fff&size=128`;
+        
+        container.innerHTML = `
+          <div class="product-detail">
+            <div class="product-images">
+              <img src="${product.images?.[0] || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'}" 
+                   alt="${product.name}" id="main-image">
+              ${product.images?.length > 1 ? `
+                <div class="product-thumbnails" id="thumbnails">
+                  ${product.images.map((img, index) => `
+                    <img src="${img}" alt="Thumbnail ${index + 1}" class="${index === 0 ? 'active' : ''}" 
+                         onclick="changeMainImage(this)">
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+            
+            <div class="product-info-detail">
+              <h1>${product.name}</h1>
+              <div class="product-price-detail">Rp ${product.price?.toLocaleString('id-ID') || '0'}</div>
+              
+              <div class="seller-info">
+                <img src="${sellerAvatar}" alt="${sellerName}" class="seller-avatar-detail">
+                <div class="seller-info-detail">
+                  <h3>${sellerName}</h3>
+                  <div class="seller-username-detail">@${sellerUsername}</div>
+                  ${seller?.rating ? `<div class="seller-rating">${'★'.repeat(Math.floor(seller.rating))}${'☆'.repeat(5-Math.floor(seller.rating))} ${seller.rating}</div>` : ''}
+                  ${seller?.role === 'admin' ? '<p style="color: var(--admin-color); font-weight: bold;">Admin</p>' : ''}
+                </div>
+              </div>
+              
+              <div class="product-description">
+                <h3>Deskripsi</h3>
+                <p>${product.description || 'Tidak ada deskripsi'}</p>
+              </div>
+              
+              <div style="margin-bottom: 20px;">
+                <h3>Informasi Penjual</h3>
+                <p><strong>Kondisi:</strong> ${getConditionText(product.condition)}</p>
+                <p><strong>Kategori:</strong> ${getCategoryText(product.category)}</p>
+                <p><strong>Kontak:</strong> ${product.contact}</p>
+                <p><strong>Lokasi:</strong> ${product.location}</p>
+                <p><strong>Diposting:</strong> ${new Date(product.createdAt).toLocaleDateString('id-ID')}</p>
+              </div>
+              
+              <div class="action-buttons">
+                <button class="btn back-btn" onclick="navigateTo('marketplace')">
+                  <i class="fas fa-arrow-left"></i> Kembali
+                </button>
+                <button class="btn btn-secondary" onclick="messageSeller('${product.sellerId}', '${product.id}')">
+                  <i class="fas fa-comment"></i> Tanya Penjual
+                </button>
+                ${currentUserData?.role === 'admin' ? `
+                  <button class="btn btn-danger" onclick="deleteProductAdmin('${product.id}')">
+                    <i class="fas fa-trash"></i> Hapus Produk
+                  </button>
+                ` : currentUser?.uid === product.sellerId ? `
+                  <button class="btn btn-warning" onclick="editProduct('${product.id}')">
+                    <i class="fas fa-edit"></i> Edit Produk
+                  </button>
+                  <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">
+                    <i class="fas fa-trash"></i> Hapus
+                  </button>
+                ` : `
+                  <button class="btn btn-primary" onclick="buyProduct('${product.id}')">
+                    <i class="fas fa-shopping-cart"></i> Beli Sekarang
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+        
+        navigateTo('product-detail');
+      } catch (error) {
+        console.error('Error loading product detail:', error);
+        showError('Failed to load product details');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Buy product
+    function buyProduct(productId) {
+      showConfirmation('Beli Produk', 'Apakah Anda yakin ingin membeli produk ini?', async () => {
+        showLoading();
+        try {
+          const productRef = database.ref('products/' + productId);
+          const snapshot = await productRef.once('value');
+          const product = snapshot.val();
+          
+          // Create order
+          const orderRef = database.ref('orders').push();
+          await orderRef.set({
+            productId: productId,
+            productName: product.name,
+            buyerId: currentUser.uid,
+            buyerName: currentUserData.name,
+            sellerId: product.sellerId,
+            sellerName: product.sellerName,
+            price: product.price,
+            status: 'pending',
+            createdAt: new Date().toISOString()
+          });
+          
+          // Send notification to seller
+          const notificationRef = database.ref('notifications/' + product.sellerId).push();
+          await notificationRef.set({
+            type: 'order',
+            message: `${currentUserData.name} ingin membeli "${product.name}"`,
+            orderId: orderRef.key,
+            read: false,
+            createdAt: new Date().toISOString()
+          });
+          
+          showSuccess('Pembelian berhasil! Penjual akan menghubungi Anda.');
+        } catch (error) {
+          console.error('Error buying product:', error);
+          showError('Failed to process purchase');
+        } finally {
+          hideLoading();
+        }
+      });
+    }
+
+    // Edit product
+    function editProduct(productId) {
+      // Implement edit functionality
+      alert('Edit functionality will be implemented');
+    }
+
+    // Delete product (by owner)
+    async function deleteProduct(productId) {
+      showConfirmation('Hapus Produk', 'Apakah Anda yakin ingin menghapus produk ini?', async () => {
+        showLoading();
+        try {
+          await database.ref('products/' + productId).update({
+            status: 'deleted',
+            deletedAt: new Date().toISOString()
+          });
+          
+          showSuccess('Produk berhasil dihapus');
+          navigateTo('my-products');
+          loadMyProducts();
+        } catch (error) {
+          console.error('Error deleting product:', error);
+          showError('Failed to delete product');
+        } finally {
+          hideLoading();
+        }
+      });
+    }
+
+    // Image upload handler
+    function handleImageUpload(e) {
+      const files = e.target.files;
+      if (files.length + uploadedImages.length > 5) {
+        alert('Maksimal 5 foto!');
+        return;
+      }
+      
+      Array.from(files).forEach(file => {
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File terlalu besar! Maksimal 5MB');
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          uploadedImages.push(e.target.result);
+          renderUploadedImages();
+        };
+        reader.readAsDataURL(file);
+      });
+      
+      e.target.value = '';
+    }
+
+    // Render uploaded images
+    function renderUploadedImages() {
+      const container = document.getElementById('uploaded-images');
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      uploadedImages.forEach((img, index) => {
+        const div = document.createElement('div');
+        div.style.position = 'relative';
+        div.innerHTML = `
+          <img src="${img}" class="uploaded-image">
+          <div class="remove-image" onclick="removeImage(${index})">×</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Remove image
+    function removeImage(index) {
+      uploadedImages.splice(index, 1);
+      renderUploadedImages();
+    }
+
+    // Publish product
+    async function publishProduct() {
+      const name = document.getElementById('product-name').value;
+      const price = parseInt(document.getElementById('product-price').value);
+      const category = document.getElementById('product-category').value;
+      const condition = document.getElementById('product-condition').value;
+      const contact = document.getElementById('product-contact').value;
+      const location = document.getElementById('product-location').value;
+      
+      // Validation
+      if (!name || !price || !category || !condition || !contact || !location) {
+        showError('Harap isi semua field yang wajib!');
+        return;
+      }
+      
+      if (price <= 0) {
+        showError('Harga harus lebih dari 0!');
+        return;
+      }
+      
+      showLoading();
+      try {
+        // Upload images to Firebase Storage
+        const imageUrls = [];
+        for (const imageData of uploadedImages) {
+          const imageRef = storage.ref().child('products/' + Date.now() + '.jpg');
+          const blob = dataURLtoBlob(imageData);
+          await imageRef.put(blob);
+          const url = await imageRef.getDownloadURL();
+          imageUrls.push(url);
+        }
+        
+        // Create product object
+        const product = {
+          name: name,
+          price: price,
+          category: category,
+          condition: condition,
+          contact: contact,
+          location: location,
+          images: imageUrls.length > 0 ? imageUrls : ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'],
+          sellerId: currentUser.uid,
+          sellerName: currentUserData.name,
+          sellerUsername: currentUserData.username,
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Save to database
+        const productRef = database.ref('products').push();
+        await productRef.set(product);
+        
+        // Reset form
+        document.getElementById('product-name').value = '';
+        document.getElementById('product-price').value = '';
+        document.getElementById('product-contact').value = '';
+        document.getElementById('product-location').value = '';
+        uploadedImages = [];
+        renderUploadedImages();
+        
+        showSuccess('Produk berhasil dipublikasikan!');
+        navigateTo('marketplace');
+        loadProducts();
+      } catch (error) {
+        console.error('Error publishing product:', error);
+        showError('Failed to publish product');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Convert data URL to blob
+    function dataURLtoBlob(dataURL) {
+      const arr = dataURL.split(',');
+      const mime = arr[0].match(/:(.*?);/)[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], { type: mime });
+    }
+
+    // Load my products
+    async function loadMyProducts() {
+      showLoading();
+      try {
+        const productsRef = database.ref('products');
+        const snapshot = await productsRef.orderByChild('sellerId').equalTo(currentUser.uid).once('value');
+        
+        const grid = document.getElementById('my-products-grid');
+        if (!grid) return;
+        
+        const myProducts = [];
+        snapshot.forEach((childSnapshot) => {
+          const product = childSnapshot.val();
+          if (product.status !== 'deleted') {
+            myProducts.push({ id: childSnapshot.key, ...product });
+          }
+        });
+        
+        if (myProducts.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-box"></i>
+              <h3>Belum ada barang yang dijual</h3>
+              <p>Anda belum menambahkan produk untuk dijual.</p>
+              <button class="btn btn-primary" id="empty-my-products-btn">
+                <i class="fas fa-plus"></i> Jual Barang Pertama
+              </button>
+            </div>
+          `;
+          
+          document.getElementById('empty-my-products-btn')?.addEventListener('click', () => navigateTo('add-product'));
+          return;
+        }
+        
+        grid.innerHTML = '';
+        
+        myProducts.forEach(product => {
+          const card = document.createElement('div');
+          card.className = 'product-card';
+          card.dataset.id = product.id;
+          
+          card.innerHTML = `
+            <img src="${product.images?.[0] || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'}" 
+                 alt="${product.name}" class="product-image">
+            <div class="product-info">
+              <div class="product-title">${product.name}</div>
+              <div class="product-price">Rp ${product.price?.toLocaleString('id-ID') || '0'}</div>
+              <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">
+                ${getConditionText(product.condition)} • ${getCategoryText(product.category)}
+              </div>
+              <div class="product-actions">
+                <button class="btn btn-primary" onclick="viewProductDetail('${product.id}')">Lihat</button>
+                <button class="btn btn-warning" onclick="editProduct('${product.id}')">Edit</button>
+                <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">Hapus</button>
+              </div>
+            </div>
+          `;
+          
+          grid.appendChild(card);
+        });
+      } catch (error) {
+        console.error('Error loading my products:', error);
+        showError('Failed to load your products');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Filter products by category
+    function filterProducts(category) {
+      displayProducts(category);
+    }
+
+    // Search products
+    function searchProducts(query) {
+      const grid = document.getElementById('products-grid');
+      if (!grid) return;
+      
+      if (!query.trim()) {
+        displayProducts();
+        return;
+      }
+      
+      const filtered = products.filter(product => {
+        const searchLower = query.toLowerCase();
+        return product.name.toLowerCase().includes(searchLower) ||
+               (product.sellerName?.toLowerCase() || '').includes(searchLower) ||
+               (product.sellerUsername?.toLowerCase() || '').includes(searchLower);
+      });
+      
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h3>Tidak ditemukan produk</h3>
+            <p>Tidak ada produk yang cocok dengan pencarian "${query}"</p>
+            <button class="btn btn-primary" onclick="document.getElementById('search-input').value=''; displayProducts()">
+              <i class="fas fa-redo"></i> Tampilkan Semua Produk
+            </button>
+          </div>
+        `;
+        return;
+      }
+      
+      grid.innerHTML = '';
+      filtered.forEach(product => {
+        const card = createProductCard(product);
+        grid.appendChild(card);
+      });
+    }
+
+    // Message seller
+    function messageSeller(sellerId, productId) {
+      // Implement messaging functionality
+      alert('Messaging functionality will be implemented');
+    }
+
+    // Change main image in detail view
+    function changeMainImage(imgElement) {
+      const mainImage = document.getElementById('main-image');
+      if (mainImage) {
+        mainImage.src = imgElement.src;
+        document.querySelectorAll('.product-thumbnails img').forEach(img => img.classList.remove('active'));
+        imgElement.classList.add('active');
+      }
+    }
+
+    // Get condition text
+    function getConditionText(condition) {
+      const conditions = {
+        'baru': 'Baru',
+        'bekas-bagus': 'Bekas (Bagus)',
+        'bekas-layak': 'Bekas (Layak Pakai)',
+        'rusak-ringan': 'Rusak Ringan'
+      };
+      return conditions[condition] || condition;
+    }
+
+    // Get category text
+    function getCategoryText(category) {
+      const categories = {
+        'buku': 'Buku & Catatan',
+        'elektronik': 'Elektronik',
+        'pakaian': 'Pakaian',
+        'olahraga': 'Olahraga',
+        'hobi': 'Hobi',
+        'lainnya': 'Lainnya'
+      };
+      return categories[category] || category;
+    }
+
+    // Load admin data
+    async function loadAdminData() {
+      showLoading();
+      try {
+        // Load users
+        const usersRef = database.ref('users');
+        const usersSnapshot = await usersRef.once('value');
+        users = [];
+        usersSnapshot.forEach((childSnapshot) => {
+          users.push({ id: childSnapshot.key, ...childSnapshot.val() });
+        });
+        
+        // Load products for admin
+        const productsRef = database.ref('products');
+        const productsSnapshot = await productsRef.once('value');
+        const allProducts = [];
+        productsSnapshot.forEach((childSnapshot) => {
+          allProducts.push({ id: childSnapshot.key, ...childSnapshot.val() });
+        });
+        
+        // Update stats
+        updateAdminStats(users, allProducts);
+        
+        // Update users table
+        updateUsersTable(users);
+        
+        // Update products table
+        updateProductsTable(allProducts);
+      } catch (error) {
+        console.error('Error loading admin data:', error);
+        showError('Failed to load admin data');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Update admin stats
+    function updateAdminStats(users, products) {
+      const statsContainer = document.getElementById('admin-stats');
+      if (!statsContainer) return;
+      
+      const totalUsers = users.length;
+      const activeUsers = users.filter(u => u.status === 'active').length;
+      const blockedUsers = users.filter(u => u.status === 'blocked').length;
+      const admins = users.filter(u => u.role === 'admin').length;
+      const totalProducts = products.filter(p => p.status === 'active').length;
+      
+      statsContainer.innerHTML = `
+        <div class="stat-card">
+          <h4>Total Pengguna</h4>
+          <div class="stat-number">${totalUsers}</div>
+          <div class="stat-change">${activeUsers} aktif</div>
+        </div>
+        <div class="stat-card warning">
+          <h4>Pengguna Diblokir</h4>
+          <div class="stat-number">${blockedUsers}</div>
+          <div class="stat-change">${((blockedUsers / totalUsers) * 100 || 0).toFixed(1)}%</div>
+        </div>
+        <div class="stat-card admin">
+          <h4>Admin</h4>
+          <div class="stat-number">${admins}</div>
+          <div class="stat-change">${((admins / totalUsers) * 100 || 0).toFixed(1)}%</div>
+        </div>
+        <div class="stat-card success">
+          <h4>Total Produk</h4>
+          <div class="stat-number">${totalProducts}</div>
+          <div class="stat-change">Aktif</div>
+        </div>
+      `;
+    }
+
+    // Update users table
+    function updateUsersTable(users) {
+      const tableBody = document.getElementById('users-table-body');
+      if (!tableBody) return;
+      
+      tableBody.innerHTML = '';
+      
+      users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <strong>@${user.username}</strong><br>
+            <small>${user.email}</small>
+          </td>
+          <td>${user.name}<br><small>${user.nickname || ''}</small></td>
+          <td><span class="status-badge ${user.role === 'admin' ? 'admin' : ''}">${user.role === 'admin' ? 'Admin' : 'Member'}</span></td>
+          <td><span class="status-badge ${user.status === 'active' ? 'active' : 'blocked'}">${user.status === 'active' ? 'Aktif' : 'Diblokir'}</span></td>
+          <td>
+            <div class="actions">
+              ${user.status === 'active' ? `
+                <button class="action-btn block" onclick="blockUser('${user.id}')">Blokir</button>
+              ` : `
+                <button class="action-btn unblock" onclick="unblockUser('${user.id}')">Aktifkan</button>
+              `}
+              ${user.role !== 'admin' ? `
+                <button class="action-btn promote" onclick="promoteToAdmin('${user.id}')">Jadikan Admin</button>
+              ` : ''}
+              <button class="action-btn delete" onclick="deleteUserAdmin('${user.id}')">Hapus</button>
+            </div>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Update products table
+    function updateProductsTable(products) {
+      const tableBody = document.getElementById('products-admin-table-body');
+      if (!tableBody) return;
+      
+      tableBody.innerHTML = '';
+      
+      products.forEach(product => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <strong>${product.name}</strong><br>
+            <small>${getCategoryText(product.category)} • ${getConditionText(product.condition)}</small>
+          </td>
+          <td>
+            <strong>${product.sellerName || 'Unknown'}</strong><br>
+            <small>@${product.sellerUsername || 'unknown'}</small>
+          </td>
+          <td>Rp ${product.price?.toLocaleString('id-ID') || '0'}</td>
+          <td><span class="status-badge ${product.status === 'active' ? 'active' : 'blocked'}">${product.status === 'active' ? 'Aktif' : 'Nonaktif'}</span></td>
+          <td>
+            <div class="actions">
+              ${product.status === 'active' ? `
+                <button class="action-btn block" onclick="blockProduct('${product.id}')">Nonaktifkan</button>
+              ` : `
+                <button class="action-btn unblock" onclick="unblockProduct('${product.id}')">Aktifkan</button>
+              `}
+              <button class="action-btn delete" onclick="deleteProductAdmin('${product.id}')">Hapus</button>
+            </div>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Block user
+    async function blockUser(userId) {
+      showConfirmation('Blokir Pengguna', 'Apakah Anda yakin ingin memblokir pengguna ini?', async () => {
+        showLoading();
+        try {
+          await database.ref('users/' + userId).update({
+            status: 'blocked',
+            updatedAt: new Date().toISOString()
+          });
+          
+          showSuccess('Pengguna berhasil diblokir');
+          loadAdminData();
+        } catch (error) {
+          console.error('Error blocking user:', error);
+          showError('Failed to block user');
+        } finally {
+          hideLoading();
+        }
+      });
+    }
+
+    // Unblock user
+    async function unblockUser(userId) {
+      showConfirmation('Aktifkan Pengguna', 'Apakah Anda yakin ingin mengaktifkan kembali pengguna ini?', async () => {
+        showLoading();
+        try {
+          await database.ref('users/' + userId).update({
+            status: 'active',
+            updatedAt: new Date().toISOString()
+          });
+          
+          showSuccess('Pengguna berhasil diaktifkan');
+          loadAdminData();
+        } catch (error) {
+          console.error('Error unblocking user:', error);
+          showError('Failed to unblock user');
+        } finally {
+          hideLoading();
+        }
+      });
+    }
+
+    // Promote to admin
+    async function promoteToAdmin(userId) {
+      showConfirmation('Jadikan Admin', 'Apakah Anda yakin ingin menjadikan pengguna ini sebagai admin?', async () => {
+        showLoading();
+        try {
+          await database.ref('users/' + userId).update({
+            role: 'admin',
+            updatedAt: new Date().toISOString()
+          });
+          
+          showSuccess('Pengguna berhasil dijadikan admin');
+          loadAdminData();
+        } catch (error) {
+          console.error('Error promoting user:', error);
+          showError('Failed to promote user');
+        } finally {
+          hideLoading();
+        }
+      });
+    }
+
+    // Delete user (admin)
+    async function deleteUserAdmin(userId) {
+      showConfirmation('Hapus Pengguna', 'Apakah Anda yakin ingin menghapus pengguna ini? Semua data pengguna akan dihapus permanen.', async () => {
+        showLoading();
+        try {
+          await database.ref('users/' + userId).remove();
+          
+          showSuccess('Pengguna berhasil dihapus');
+          loadAdminData();
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          showError('Failed to delete user');
+        } finally {
+          hideLoading();
+        }
+      });
+    }
+
+    // Block product
+    async function blockProduct(productId) {
+      showConfirmation('Nonaktifkan Produk', 'Apakah Anda yakin ingin menonaktifkan produk ini?', async () => {
+        showLoading();
+        try {
+          await database.ref('products/' + productId).update({
+            status: 'blocked',
+            updatedAt: new Date().toISOString()
+          });
+          
+          showSuccess('Produk berhasil dinonaktifkan');
+          loadAdminData();
+        } catch (error) {
+          console.error('Error blocking product:', error);
+          showError('Failed to block product');
+        } finally {
+          hideLoading();
+        }
+      });
+    }
+
+    // Unblock product
+    async function unblockProduct(productId) {
+      showConfirmation('Aktifkan Produk', 'Apakah Anda yakin ingin mengaktifkan kembali produk ini?', async () => {
+        showLoading();
+        try {
+          await database.ref('products/' + productId).update({
+            status: 'active',
+            updatedAt: new Date().toISOString()
+          });
+          
+          showSuccess('Produk berhasil diaktifkan');
+          loadAdminData();
+        } catch (error) {
+          console.error('Error unblocking product:', error);
+          showError('Failed to unblock product');
+        } finally {
+          hideLoading();
+        }
+      });
+    }
+
+    // Delete product (admin)
+    async function deleteProductAdmin(productId) {
+      showConfirmation('Hapus Produk', 'Apakah Anda yakin ingin menghapus produk ini secara permanen?', async () => {
+        showLoading();
+        try {
+          await database.ref('products/' + productId).remove();
+          
+          showSuccess('Produk berhasil dihapus');
+          loadAdminData();
+        } catch (error) {
+          console.error('Error deleting product:', error);
+          showError('Failed to delete product');
+        } finally {
+          hideLoading();
+        }
+      });
+    }
+
+    // Modal functionality
+    function setupModal() {
+      const modal = document.getElementById('confirmation-modal');
+      const closeBtn = document.getElementById('close-modal');
+      const cancelBtn = document.getElementById('modal-cancel');
+      
+      if (closeBtn) closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+      if (cancelBtn) cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('active');
+      });
+    }
+
+    // Show confirmation modal
+    function showConfirmation(title, message, confirmCallback) {
+      const modal = document.getElementById('confirmation-modal');
+      const modalTitle = document.getElementById('modal-title');
+      const modalMessage = document.getElementById('modal-message');
+      const confirmBtn = document.getElementById('modal-confirm');
+      
+      if (!modal || !modalTitle || !modalMessage || !confirmBtn) return;
+      
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      modal.classList.add('active');
+      
+      confirmBtn.onclick = () => {
+        confirmCallback();
+        modal.classList.remove('active');
+      };
+    }
+
+    // Show error message
+    function showError(message) {
+      alert('Error: ' + message);
+    }
+
+    // Show success message
+    function showSuccess(message) {
+      alert('Success: ' + message);
+    }
+
+    // Login/Register functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      // Setup tabs
+      document.getElementById('loginTab')?.addEventListener('click', showLoginForm);
+      document.getElementById('registerTab')?.addEventListener('click', showRegisterForm);
+      document.getElementById('loginTab2')?.addEventListener('click', showLoginForm);
+      document.getElementById('registerTab2')?.addEventListener('click', showRegisterForm);
+      document.getElementById('backToLogin')?.addEventListener('click', showLoginForm);
+      
+      // Setup login form
+      const loginForm = document.getElementById('loginForm');
+      const errorMessage = document.getElementById('errorMessage');
+      const successMessage = document.getElementById('successMessage');
+      
+      if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const input = document.getElementById('username').value.trim();
+          const password = document.getElementById('password').value.trim();
+          
+          if (!input || !password) {
+            errorMessage.textContent = 'Harap isi semua field.';
+            errorMessage.style.display = 'block';
+            return;
+          }
+          
+          showLoading();
+          
+          try {
+            // Determine if input is email or username
+            let email = input;
+            
+            // Check if input contains @ (is email)
+            if (!input.includes('@')) {
+              // If it's just a username, try with default domain
+              email = input + '@dipmarket.com';
+            }
+            
+            console.log('Attempting login with email:', email);
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            console.log('Login successful:', userCredential.user.email);
+          } catch (error) {
+            console.error('Login error:', error.code, error.message);
+            
+            // If login fails with default domain, try direct email
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+              errorMessage.textContent = 'Email atau password salah.';
+              errorMessage.style.display = 'block';
+              successMessage.style.display = 'none';
+            } else {
+              errorMessage.textContent = `Login gagal: ${error.message}`;
+              errorMessage.style.display = 'block';
+              successMessage.style.display = 'none';
+            }
+            
+            setTimeout(() => {
+              errorMessage.style.display = 'none';
+            }, 5000);
+          } finally {
+            hideLoading();
+          }
+        });
+      }
+      
+      // Setup register form
+      const registerForm = document.getElementById('registerForm');
+      const registerErrorMessage = document.getElementById('registerErrorMessage');
+      const registerSuccessMessage = document.getElementById('registerSuccessMessage');
+      
+      if (registerForm) {
+        registerForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const firstName = document.getElementById('firstName').value.trim();
+          const lastName = document.getElementById('lastName').value.trim();
+          const username = document.getElementById('usernameReg').value.trim();
+          const nickname = document.getElementById('nickname').value.trim();
+          const email = document.getElementById('regEmail').value.trim();
+          const password = document.getElementById('regPassword').value;
+          const confirmPassword = document.getElementById('confirmPassword').value;
+          const phone = document.getElementById('phone').value.trim();
+          
+          // Validation
+          if (!firstName || !lastName || !username || !email || !password || !confirmPassword) {
+            registerErrorMessage.textContent = 'Harap isi semua field yang wajib.';
+            registerErrorMessage.style.display = 'block';
+            registerSuccessMessage.style.display = 'none';
+            return;
+          }
+          
+          if (username.length < 3) {
+            registerErrorMessage.textContent = 'Username minimal 3 karakter.';
+            registerErrorMessage.style.display = 'block';
+            registerSuccessMessage.style.display = 'none';
+            return;
+          }
+          
+          if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+            registerErrorMessage.textContent = 'Username hanya boleh berisi huruf, angka, dan underscore.';
+            registerErrorMessage.style.display = 'block';
+            registerSuccessMessage.style.display = 'none';
+            return;
+          }
+          
+          if (password !== confirmPassword) {
+            registerErrorMessage.textContent = 'Password tidak cocok.';
+            registerErrorMessage.style.display = 'block';
+            registerSuccessMessage.style.display = 'none';
+            return;
+          }
+          
+          if (password.length < 6) {
+            registerErrorMessage.textContent = 'Password minimal 6 karakter.';
+            registerErrorMessage.style.display = 'block';
+            registerSuccessMessage.style.display = 'none';
+            return;
+          }
+          
+          showLoading();
+          
+          try {
+            // Create user with Firebase Authentication
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            console.log('User created:', userCredential.user.uid);
+            
+            // Update user profile
+            await userCredential.user.updateProfile({
+              displayName: `${firstName} ${lastName}`
+            });
+            
+            // Create user data in database
+            const userData = {
+              uid: userCredential.user.uid,
+              email: email,
+              username: username,
+              name: `${firstName} ${lastName}`,
+              nickname: nickname || firstName,
+              phone: phone || '',
+              role: 'member',
+              status: 'active',
+              createdAt: new Date().toISOString(),
+              lastLogin: new Date().toISOString()
+            };
+            
+            console.log('Saving user data to database:', userData);
+            await database.ref('users/' + userCredential.user.uid).set(userData);
+            console.log('User data saved successfully');
+            
+            // Show success message
+            registerSuccessMessage.textContent = 'Pendaftaran berhasil! Akun Anda telah dibuat.';
+            registerSuccessMessage.style.display = 'block';
+            registerErrorMessage.style.display = 'none';
+            
+            // Clear form
+            registerForm.reset();
+            
+            // Auto switch to login after 2 seconds
+            setTimeout(() => {
+              showLoginForm();
+              document.getElementById('username').value = email;
+              document.getElementById('password').value = '';
+              successMessage.textContent = 'Pendaftaran berhasil! Silakan login dengan akun baru Anda.';
+              successMessage.style.display = 'block';
+              
+              // Auto login
+              setTimeout(() => {
+                loginForm.dispatchEvent(new Event('submit'));
+              }, 1000);
+            }, 2000);
+            
+          } catch (error) {
+            console.error('Registration error:', error);
+            
+            if (error.code === 'auth/email-already-in-use') {
+              registerErrorMessage.textContent = 'Email sudah terdaftar.';
+            } else if (error.code === 'auth/weak-password') {
+              registerErrorMessage.textContent = 'Password terlalu lemah.';
+            } else if (error.code === 'auth/invalid-email') {
+              registerErrorMessage.textContent = 'Format email tidak valid.';
+            } else {
+              registerErrorMessage.textContent = `Pendaftaran gagal: ${error.message}`;
+            }
+            
+            registerErrorMessage.style.display = 'block';
+            registerSuccessMessage.style.display = 'none';
+          } finally {
+            hideLoading();
+          }
+        });
+      }
+    });
+
+    function showLoginForm() {
+      document.querySelector('.login-card').style.display = 'block';
+      document.querySelector('.register-card').style.display = 'none';
+      
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.getElementById('loginTab').classList.add('active');
+      document.getElementById('loginTab2').classList.add('active');
+      
+      // Clear messages
+      document.getElementById('errorMessage').style.display = 'none';
+      document.getElementById('successMessage').style.display = 'none';
+    }
+
+    function showRegisterForm() {
+      document.querySelector('.login-card').style.display = 'none';
+      document.querySelector('.register-card').style.display = 'block';
+      
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.getElementById('registerTab').classList.add('active');
+      document.getElementById('registerTab2').classList.add('active');
+      
+      // Clear messages
+      document.getElementById('errorMessage').style.display = 'none';
+      document.getElementById('successMessage').style.display = 'none';
+      document.getElementById('registerErrorMessage').style.display = 'none';
+      document.getElementById('registerSuccessMessage').style.display = 'none';
+    }
+
+    // Make functions available globally
+    window.navigateTo = navigateTo;
+    window.viewProductDetail = viewProductDetail;
+    window.messageSeller = messageSeller;
+    window.buyProduct = buyProduct;
+    window.editProduct = editProduct;
+    window.deleteProduct = deleteProduct;
+    window.changeMainImage = changeMainImage;
+    window.removeImage = removeImage;
+    window.blockUser = blockUser;
+    window.unblockUser = unblockUser;
+    window.promoteToAdmin = promoteToAdmin;
+    window.deleteUserAdmin = deleteUserAdmin;
+    window.blockProduct = blockProduct;
+    window.unblockProduct = unblockProduct;
+    window.deleteProductAdmin = deleteProductAdmin;
+    window.showConfirmation = showConfirmation;
+  </script>
+</body>
+</html>
